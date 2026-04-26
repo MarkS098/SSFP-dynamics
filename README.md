@@ -41,11 +41,11 @@ $$\mathbf{M}_{syn,B}^{(b)} = \mathbf{M}_{sim,B}(\hat{\theta}) + \mathbf{e}_{B}^{
 
 | Script | Purpose |
 | :--- | :--- |
-| `raw_data_process.m` | Extracts peak intensities from raw Bruker data and handles frequency calibration. |
+| `raw_data_process.m` | Processes raw Bruker data and outputs a .mat file containing the peak intensities, $TR$ values and flip angle. |
 | `ssfp_exchange_jointfit.m` | **Main Engine**: Executes global joint optimization and bootstrap error analysis. |
-| `chem_exchange_sim.m` | **Forward Model**: Matrix exponential-based steady-state simulator for $N$ sites. |
-| `read_ssfp_acqus.m` | Parses Bruker `acqus` files for $T_R$, flip angle, and carrier frequency. |
-| `read_ssfp_procs.m` | Extracts processing parameters (scaling factors, SI). |
+| `chem_exchange_sim.m` | **Forward Model**: steady-state simulator for $3$ sites. |
+| `read_ssfp_acqus.m` | Parses Bruker `acqus` files for $TR$, flip angle, and other experimental parameters. |
+| `read_ssfp_procs.m` | Extracts processing parameters (scaling factors, SI etc...). |
 | `read_bruker_data.m` | Low-level binary reader for Bruker `fid` and `ser` files. |
 
 ## 🚀 Getting Started
