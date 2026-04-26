@@ -29,13 +29,13 @@ This package is designed to analyze NMR signal attenuation as a function of repe
 
 ### 1. Objective Function & Joint Fitting
 To prevent the solver from artificially scaling individual sites to mask exchange-induced attenuation, a global scale factor $c(\theta)$ is computed:
-$$c(\theta) = \frac{\mathbf{M}_{sim}(\theta)^T \mathbf{M}_{exp}}{\mathbf{M}_{sim}(\theta)^T \mathbf{M}_{sim}(\theta)}$$
+$c(\theta) = \frac{\mathbf{M}_{sim}(\theta)^T \mathbf{M}_{exp}}{\mathbf{M}_{sim}(\theta)^T \mathbf{M}_{sim}(\theta)}$
 The objective function returns a dimensionless residual vector $\mathbf{r}(\theta)$, normalized by the mean absolute intensity of the global experimental signal:
-$$\mathbf{r}(\theta) = \frac{c(\theta)\mathbf{M}_{sim}(\theta) - \mathbf{M}_{exp}}{\frac{1}{N}\sum_{i=1}^{N}|M_{exp,i}|}$$
+$\mathbf{r}(\theta) = \frac{c(\theta)\mathbf{M}_{sim}(\theta) - \mathbf{M}_{exp}}{\frac{1}{N}\sum_{i=1}^{N}|M_{exp,i}|}$
 
 ### 2. Uncertainty Quantification
 Because the Jacobian is often ill-conditioned, we utilize a **Non-Parametric Bootstrap**. The residuals are isolated per peak ($\mathbf{e}_A$, $\mathbf{e}_B$) and resampled with replacement to generate $B$ synthetic datasets:
-$$\mathbf{M}_{syn,A}^{(b)} = \hat{M}_{A} + \mathbf{e}_A^{*(b)}, \quad \mathbf{M}_{syn,B}^{(b)} = \hat{M}_{B} + \mathbf{e}_B^{*(b)}$$
+$\mathbf{M}_{syn,A}^{(b)} = \hat{M}_{A} + \mathbf{e}_A^{*(b)}, \quad \mathbf{M}_{syn,B}^{(b)} = \hat{M}_{B} + \mathbf{e}_B^{*(b)}$
 The standard deviation of the resulting distribution provides the reported parameter uncertainties ($\sigma_{\theta}$).
 
 ## Usage
