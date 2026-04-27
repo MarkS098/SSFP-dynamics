@@ -42,10 +42,10 @@ $$\mathbf{M}_{syn,B}^{(b)} = \mathbf{M}_{sim,B}(\hat{\theta}) + \mathbf{e}_{B}^{
 | Script | Purpose |
 | :--- | :--- |
 | `raw_data_process.m` | Processes raw Bruker data and outputs a .mat file containing the peak intensities, $TR$ values and flip angle. |
-| `ssfp_exchange_jointfit.m` | **Main Engine**: Executes global joint optimization and bootstrap error analysis. |
+| `ssfp_exchange_jointfit.m` | **Main Engine**: Executes global optimization and bootstrap error analysis. |
 | `chem_exchange_sim.m` | **Forward Model**: steady-state simulator for $3$ sites. |
 | `read_ssfp_acqus.m` | Parses Bruker `acqus` files for $TR$, flip angle, and other experimental parameters. |
-| `read_ssfp_procs.m` | Extracts processing parameters (scaling factors, SI etc...). |
+| `read_ssfp_procs.m` | Extracts processing parameters (scaling factor, SI etc...). |
 | `read_bruker_data.m` | Low-level binary reader for Bruker `fid` and `ser` files. |
 
 ## 🚀 Getting Started
@@ -53,6 +53,6 @@ $$\mathbf{M}_{syn,B}^{(b)} = \mathbf{M}_{sim,B}(\hat{\theta}) + \mathbf{e}_{B}^{
 1. **Clone the Repo**: 
    ```bash
    git clone [https://github.com/your-username/SSFP-Exchange-Analysis.git](https://github.com/your-username/SSFP-Exchange-Analysis.git)
-2.
-3.
-4.
+2. **Process Raw Data**: Open `raw_data_process.m`, point  `data_dir` to your Bruker experiments, select appropriate boundaries for the region of interest, noise region and minimum peak threshold and run it.
+3. **Run The Fit**: Open `ssfp_exchange_jointfit.m`, load your processed .mat files, select either a 2 site or 3 site process, appropriate boundaries and execute the solver.
+4. **Output**: Logarithmic $\chi^2$ maps for $k_{ex} vs\\,{R_2}$, $k_{ex} vs\\,{\nu_i}$, fitted curves for the SSFP profile and a table of the optimized parameters
