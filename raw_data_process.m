@@ -95,9 +95,6 @@ for j = 1:numel(dir_num)
     sub_axis = ppm_axis(ppm_axis > min(bounds) & ppm_axis < max(bounds));
     sub_spect = spect(ppm_axis > min(bounds) & ppm_axis < max(bounds));
 
-    % Noise variance calculation
-    noise_var(j) = var(spect(ppm_axis > min(noise_bound) & ppm_axis < max(noise_bound)));
-
     % Determining the maxima of the spectrum
     [pks,locs] = findpeaks(sub_spect,sub_axis,"MinPeakHeight",min_height);
     
