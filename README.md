@@ -2,14 +2,19 @@
 
 A MATLAB-based computational framework for extracting multi-site chemical exchange kinetics and transverse relaxation rates from Steady-State Free Precession (SSFP) NMR data.
 
+## ⚙️ Requirements
+
+- MATLAB (R2021a or later recommended)
+- Optimization Toolbox (for `lsqnonlin`, `MultiStart`)
+
 ## 🔬 Scientific Framework
 
-This software implements a Liouville-space Bloch-McConnell model to simulate the periodic steady state of magnetization. 
+This software implements a Liouville-space Bloch-McConnell model to simulate and fit the periodic steady state magnetization signal. 
 
 ### 1. Objective Function Formulation & Global Joint Fitting
 Parameter extraction is treated as a bounded, non-linear least squares optimization problem.
 
-Experimental datasets from all observable sites (e.g., Peak A and Peak B) are concatenated into a single global vector $\mathbf{M}\_{exp}$, which is evaluated against a global simulated signal $\mathbf{M}\_{sim}(\theta)$. 
+Experimental datasets from all observable sites (e.g., Peak A and Peak B) are concatenated into a single global vector $\mathbf{M}\_{exp}$, which is compared to a global simulated signal $\mathbf{M}\_{sim}(\theta)$. 
 
 To account for arbitrary global scaling differences, an analytical scale factor $c(\theta)$ is computed via orthogonal projection at each iteration:
 
@@ -37,6 +42,19 @@ $$\mathbf{M}_{syn,B}^{(b)} = \mathbf{M}_{sim,B}(\hat{\theta}) + \mathbf{e}_{B}^{
 
 3. **Joint Stochastic Probing**: The synthetic datasets are concatenated, and the joint optimization is re-executed for $B$ iterations. The parameter uncertainties are defined as the standard deviation of the resulting bootstrapped distribution.
 
+### 4. Visualize the Fit and Confidence Intervals
+The following images will be output after running the fit:
+<p float="left">
+  <img src="https://github.com/user-attachments/assets/6e3e9e69-8c82-4583-be21-52b4c4c6ac32", width="45%"/>
+  <img src="https://github.com/user-attachments/assets/5b6d2cbc-e6df-4fac-991e-7d2a359f93cc", width="45%"/> 
+</p>
+<p float="left">
+   <img src="https://github.com/user-attachments/assets/106e4a98-0521-4155-af07-50e9eeb6bbc9", width="90%"/>
+</p>
+<p float="left">
+   <img src="https://github.com/user-attachments/assets/42f44326-2aca-4854-8b14-4daedcefc5a3", width="43.7%"/>
+</p>
+
 ## 📂 Script Descriptions
 
 | Script | Purpose |
@@ -55,4 +73,4 @@ $$\mathbf{M}_{syn,B}^{(b)} = \mathbf{M}_{sim,B}(\hat{\theta}) + \mathbf{e}_{B}^{
    git clone [https://github.com/your-username/SSFP-Exchange-Analysis.git](https://github.com/your-username/SSFP-Exchange-Analysis.git)
 2. **Process Raw Data**: Open `raw_data_process.m`, point  `data_dir` to your Bruker experiments, select appropriate boundaries for the region of interest, noise region and minimum peak threshold and run it.
 3. **Run The Fit**: Open `ssfp_exchange_jointfit.m`, load your processed .mat files, select either a 2 site or 3 site process, appropriate boundaries and execute the solver.
-4. **Output**: Logarithmic $\chi^2$ maps for $k_{ex} vs\\,{R_2}$, $k_{ex} vs\\,{\nu_i}$, fitted curves for the SSFP profile and a table of the optimized parameters
+4. **Output**: Logarithmic $\chi^2$ maps for $k_{ex} vs\\,{R_2}$, $k_{ex} vs\\,{\nu_i}$, fitted curves for the SSFP profile and a table of the optimized parameters.
