@@ -7,7 +7,7 @@ A MATLAB-based computational framework for extracting multi-site chemical exchan
 - MATLAB (R2021a or later recommended)
 - Optimization Toolbox (for `lsqnonlin`, `MultiStart`)
 
-## 🔬 Scientific Framework
+## Framework
 
 This software implements a Liouville-space Bloch-McConnell model to simulate and fit the periodic steady state magnetization signal. 
 
@@ -43,7 +43,7 @@ $$\mathbf{M}_{syn,B}^{(b)} = \mathbf{M}_{sim,B}(\hat{\theta}) + \mathbf{e}_{B}^{
 3. **Joint Stochastic Probing**: The synthetic datasets are concatenated, and the joint optimization is re-executed for $B$ iterations. The parameter uncertainties are defined as the standard deviation of the resulting bootstrapped distribution.
 
 ### 4. Visualize the Fit and Confidence Intervals
-The following images will be output after running the fit:
+The following figures for the fit and $\chi^{2}$ maps will be output after running the fit:
 <p float="left">
   <img src="https://github.com/user-attachments/assets/6e3e9e69-8c82-4583-be21-52b4c4c6ac32", width="45%"/>
   <img src="https://github.com/user-attachments/assets/5b6d2cbc-e6df-4fac-991e-7d2a359f93cc", width="45%"/> 
