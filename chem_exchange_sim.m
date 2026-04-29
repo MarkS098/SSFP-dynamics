@@ -1,4 +1,22 @@
 function [M_A,M_B,M_C] = chem_exchange_sim(flip_angle,Tacq,pop,nu,kex,R1,R2)
+% CHEM_EXCHANGE_SIM - Liouville-space Bloch-McConnell Simulator
+%
+% Simulates the steady-state magnetization for up to 3 exchanging sites.
+%
+% INPUTS:
+%   flip  - Flip angle (degrees)
+%   Tacq  - Acquisition time vector (seconds)
+%   pops  - [MA0, MB0] (MC0 is calculated as 1 - sum(pops))
+%   nu    - [nu_A, nu_B, nu_C] Frequencies (Hz)
+%   kex   - [k_AB, k_BC, k_AC] Exchange rates (s^-1)
+%   R1    - Longitudinal relaxation rate (s^-1)
+%   R2    - Transverse relaxation rate (s^-1)
+%
+% OUTPUTS:
+%   M_A, M_B, M_C - Simulated steady-state signals for each site.
+%
+% NOTES:
+%   For 2-site exchange, set k_BC, k_AC, and nu_C to 0.
 
 % All quantities are in Hz and seconds
 
@@ -50,7 +68,7 @@ R1A=R1;R1B=R1; R1C=R1;
 R2A=R2;R2B=R2;R2C=R2;
 
 
-nu1=100000; % RF amplitude
+nu1=1e5; % RF amplitude
 nu1=-nu1;
 omega1=2*pi*(nu1);T90=1/abs(nu1)/4;
 Tpulse=T90*flip_angle/90; % pulse flip angle and duration
@@ -73,7 +91,7 @@ Rrf(10,1:10)=[0 0 0 0 0 0 0 -omega1Y omega1X 0];
 % RF propagator
 U_rf=expm(Rrf*Tpulse);
 
-% pre allocating magnetization arrays
+% pre-allocating magnetization arrays
 MXA_null = zeros(size(Tacq));MYA_null = zeros(size(Tacq)); MZA_null = zeros(size(Tacq));
 MXB_null = zeros(size(Tacq));MYB_null = zeros(size(Tacq)); MZB_null = zeros(size(Tacq));
 MXC_null = zeros(size(Tacq));MYC_null = zeros(size(Tacq)); MZC_null = zeros(size(Tacq));
@@ -83,16 +101,13 @@ I10 = eye(10);
 for q=1:numel(Tacq)
     TR=Tacq(q);
 
-    % if you work with arbitrary offsets
-    nuA=-1/2/TR+nu_A0; % the -1/2/Tacq addition is to mimim the x -x phases you have in experiment
+    % the -1/2/Tacq addition is to mimic the x -x phases in the experiment
+    nuA=-1/2/TR+nu_A0; 
     nuB=-1/2/TR+nu_B0;
     nuC=-1/2/TR+nu_C0;
-    %%%%%%%%%%% maybe later we can find a way to do the null without adding -1/2/Tacq
-
     nuA=-nuA;nuB=-nuB;nuC=-nuC;
 
-    %%% here all sites have the same relaxation rates R1 and R2
-    %%% however you can set them differently with this numerical approach
+    % here all sites have the same relaxation rates R1 and R2
 
     omegaA=2*pi*nuA; % from frequency to angular frequency
     omegaB=2*pi*nuB;
@@ -113,7 +128,7 @@ for q=1:numel(Tacq)
     R0=R0+K; % Full Liouville matrix for free evolution (no pulses)
     Ufree=expm(R0*TR); % propagator for free evolution
 
-    %%%%%%%%%%%%  finding the steady state
+    % finding the steady state
     U=U_rf*Ufree;
     A_sys = U-I10;
     A_sys(1,:) = [1,zeros(1,9)];

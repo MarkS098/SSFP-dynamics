@@ -1,28 +1,33 @@
 clc; close all; clearvars;
+% ssfp_exchange_jointfit - Multi-site Global Joint Fitting Engine
+%
+% Performs non-linear least squares optimization to extract chemical exchange 
+% parameters from SSFP NMR data.
+%
+% USAGE:
+%   Run script directly. Toggle 'num_sites' variable for 2 or 3 site models.
+%
+% INPUT DATA REQUIREMENTS:
+%   Requires .mat files containing:
+%   - 'peaks': Vector of complex or absolute peak intensities.
+%   - 'TR_vals': Vector of repetition times (ms).
+%
+%
+% SEE ALSO: chem_exchange_sim, lsqnonlin, MultiStart
 
-% --- PROCESSING OPTIONS ---
+% Processing options
 num_sites = 2;      % Toggle between 2 and 3 site joint fitting
-% --------------------------
 
 % Constants 
-R1 = 1/11;          % Longitudinal relaxation rate (s^-1)
-FLIP = 23;          % Flip angle
-skip_points = 0;    % points to omit from fitting from the start
+R1 = 1/10;          % Longitudinal relaxation rate (s^-1)
+skip_points = 10;    % points to omit from fitting from the start
 skip_end_points = 0; % points to omit from fitting from the end
 
 % Load data
-load('/home/mark/NMR Data/XmX processing/Data/ACAC_293K/ACAC_peakA_offset_arbitrary_293K_FA23.mat','peaks','TR_vals','FA');
+load('/home/mark/NMR Data/XmX processing/Data/Simulated data/mark_SSFP_test_data_offres_R2_less_than_10_A.mat','peaks','TR_vals','FLIP');
 M_0_A = abs(peaks(1+skip_points:end - skip_end_points));
-load('/home/mark/NMR Data/XmX processing/Data/ACAC_293K/ACAC_peakB_offset_arbitrary_293K_FA23.mat','peaks','TR_vals','FA');
+load('/home/mark/NMR Data/XmX processing/Data/Simulated data/mark_SSFP_test_data_offres_R2_less_than_10_B.mat','peaks','TR_vals','FLIP');
 M_0_B = abs(peaks(1+skip_points:end - skip_end_points));
-
-% Acquisition times
-Tacq = TR_vals(1+skip_points:end - skip_end_points)*1e-3;  % seconds
-Tacq = Tacq(:); % Ensure column vector
-FLIP = FA;
-
-M_0_A = M_0_A(:);
-M_0_B = M_0_B(:);
 
 if num_sites == 3
     % Replace path below with actual Peak C data
@@ -38,8 +43,8 @@ end
 % 2 site exchange boundaries
 % Parameter bounds: [MA0, MB0, kex_AB, kex_BC, kex_AC, nuA, nuB, nuC, R2]
 if num_sites == 2
-    lb = [0.01, 0.01, 0.1, 0, 0, 0, 0, 0, 0.1];   
-    ub = [0.99, 0.99, 20, 0, 0, 1000, 1000, 0, 10];
+    lb = [0.01, 0.01, 1, 0, 0, 0,    0,    0, 1];   
+    ub = [0.99, 0.99, 5, 0, 0, 1000, 1000, 0, 10];
 
 % 3 site exchange boundaries
 % Parameter bounds: [MA0, MB0,MC0, kex_AB, kex_BC, kex_AC, nuA, nuB, nuC, R2]
@@ -51,6 +56,14 @@ end
 Nstart = 1000;  % number of random starting points within bounds
 N_boot = 50;    % number of bootstrap runs
 n_grid = 50;    % chi square map resolution
+
+% Acquisition times
+TR_vals = TR_vals(1+skip_points:end - skip_end_points);  % seconds
+TR_vals = TR_vals(:); % Ensure column vector
+
+M_0_A = M_0_A(:);
+M_0_B = M_0_B(:);
+
 
 % Objective function evaluating datasets simultaneously
 function residuals = objective_function_global(params, Tacq, M_exp_A, M_exp_B, M_exp_C, R1, FLIP, num_sites)
@@ -105,7 +118,7 @@ options = optimoptions('lsqnonlin','Display','off','MaxIterations',1000,'TolFun'
 x0 = lb + (ub-lb)/2;  
 problem = createOptimProblem('lsqnonlin', ...
     'x0', x0, ...
-    'objective', @(p)objective_function_global(p,Tacq,M_0_A,M_0_B,M_0_C,R1,FLIP,num_sites), ...
+    'objective', @(p)objective_function_global(p,TR_vals,M_0_A,M_0_B,M_0_C,R1,FLIP,num_sites), ...
     'lb', lb, 'ub', ub, ...
     'options', options);
 
@@ -150,7 +163,7 @@ else
 end
 
 % Extract optimized parameters and compute global scale
-[M_A_unscaled, M_B_unscaled, M_C_unscaled] = chem_exchange_sim(FLIP, Tacq, [MA_final,MB_final], ...
+[M_A_unscaled, M_B_unscaled, M_C_unscaled] = chem_exchange_sim(FLIP, TR_vals, [MA_final,MB_final], ...
                                                [best_params(6),best_params(7),best_params(8)], ...
                                                [best_params(3),best_params(4),best_params(5)], R1, best_params(9));
 
@@ -178,9 +191,9 @@ end
 boot_params = zeros(N_boot, numel(best_params));
 
 % Setup variables and normalization factor for Bootstrap
-res_vec = objective_function_global(best_params,Tacq,M_0_A,M_0_B,M_0_C,R1,FLIP,num_sites);
+res_vec = objective_function_global(best_params,TR_vals,M_0_A,M_0_B,M_0_C,R1,FLIP,num_sites);
 norm_fact = mean(abs(M_exp_cat));
-num_pts = numel(Tacq);
+num_pts = numel(TR_vals);
 
 opt_fast = optimoptions('lsqnonlin', 'Display', 'off', 'MaxIterations', 100, 'TolFun', 1e-8);
 fprintf('Running Bootstrap... ');
@@ -211,7 +224,7 @@ parfor b = 1:N_boot
     p_start = best_params.*(1 + 0.02*randn(size(best_params)));
     p_start = max(min(p_start, ub), lb);
     
-    [p_boot, ~, ~] = lsqnonlin(@(p) objective_function_global(p,Tacq,noisy_M0_A,noisy_M0_B,noisy_M0_C,R1,FLIP,num_sites), ...
+    [p_boot, ~, ~] = lsqnonlin(@(p) objective_function_global(p,TR_vals,noisy_M0_A,noisy_M0_B,noisy_M0_C,R1,FLIP,num_sites), ...
                             p_start, lb, ub, opt_fast);
     boot_params(b, :) = p_boot;
 end
@@ -250,7 +263,7 @@ for s = 1:3
         p_temp = best_params;        
         p_temp(k_idx) = K_flat(idx); 
         p_temp(9) = R_flat(idx);     
-        res = objective_function_global(p_temp,Tacq,M_0_A,M_0_B,M_0_C,R1,FLIP,num_sites);
+        res = objective_function_global(p_temp,TR_vals,M_0_A,M_0_B,M_0_C,R1,FLIP,num_sites);
         chi2_flat(idx) = sum(res.^2); 
     end
     
@@ -324,7 +337,7 @@ for s = 1:n_maps
         p_temp = best_params;        
         p_temp(k_idx) = K_flat(idx); 
         p_temp(nu_idx) = NU_flat(idx);     
-        res = objective_function_global(p_temp,Tacq,M_0_A,M_0_B,M_0_C,R1,FLIP,num_sites);
+        res = objective_function_global(p_temp,TR_vals,M_0_A,M_0_B,M_0_C,R1,FLIP,num_sites);
         chi2_flat(idx) = sum(res.^2); 
     end
     all_maps_nu{s} = log10(reshape(chi2_flat, n_grid, n_grid));
@@ -357,21 +370,21 @@ title_str = { ...
 norm_plot = max(M_exp_cat); 
 
 figure('Name', 'Global SSFP Fit - A', 'Color', 'w', 'Position', [50, 100, 1000, 600])
-plot(Tacq*1e3, M_0_A/norm_plot, 'b-','LineWidth',2,'DisplayName','Exp Peak A'); hold on
-plot(Tacq*1e3, M_A_opt/norm_plot, 'r--','LineWidth',2,'DisplayName','Fit Peak A')
+plot(TR_vals*1e3, M_0_A/norm_plot, 'b-','LineWidth',2,'DisplayName','Exp Peak A'); hold on
+plot(TR_vals*1e3, M_A_opt/norm_plot, 'r--','LineWidth',2,'DisplayName','Fit Peak A')
 xlabel('TR [ms]', 'FontSize', 12); ylabel('Normalized Intensity', 'FontSize', 12); legend('Location', 'best')
 title('Peak A ',title_str,'Interpreter','tex', 'FontSize', 13); set(gca,'FontSize',12)
 
 figure('Name', 'Global SSFP Fit - B', 'Color', 'w', 'Position', [50, 100, 1000, 600])
-plot(Tacq*1e3, M_0_B/norm_plot, 'b-','LineWidth',2,'DisplayName','Exp Peak B'); hold on
-plot(Tacq*1e3, M_B_opt/norm_plot, 'r--','LineWidth',2,'DisplayName','Fit Peak B')
+plot(TR_vals*1e3, M_0_B/norm_plot, 'b-','LineWidth',2,'DisplayName','Exp Peak B'); hold on
+plot(TR_vals*1e3, M_B_opt/norm_plot, 'r--','LineWidth',2,'DisplayName','Fit Peak B')
 xlabel('TR [ms]', 'FontSize', 12); ylabel('Normalized Intensity', 'FontSize', 12); legend('Location', 'best')
 title('Peak B ',title_str,'Interpreter','tex', 'FontSize', 13); set(gca,'FontSize',12)
 
 if num_sites == 3
     figure('Name', 'Global SSFP Fit - C', 'Color', 'w', 'Position', [50, 100, 1000, 600])
-    plot(Tacq*1e3, M_0_C/norm_plot, 'b-','LineWidth',2,'DisplayName','Exp Peak C'); hold on
-    plot(Tacq*1e3, M_C_opt/norm_plot, 'r--','LineWidth',2,'DisplayName','Fit Peak C')
+    plot(TR_vals*1e3, M_0_C/norm_plot, 'b-','LineWidth',2,'DisplayName','Exp Peak C'); hold on
+    plot(TR_vals*1e3, M_C_opt/norm_plot, 'r--','LineWidth',2,'DisplayName','Fit Peak C')
     xlabel('TR [ms]', 'FontSize', 12); ylabel('Normalized Intensity', 'FontSize', 12); legend('Location', 'best')
     title('Peak C ',title_str,'Interpreter','tex', 'FontSize', 13); set(gca,'FontSize',12)
 end
