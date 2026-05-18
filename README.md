@@ -73,4 +73,4 @@ The following figures for the fit and $\chi^{2}$ maps will be output after runni
    git clone [https://github.com/your-username/SSFP-Exchange-Analysis.git](https://github.com/your-username/SSFP-Exchange-Analysis.git)
 2. **Process Raw Data**: Open `raw_data_process.m`, point  `data_dir` to your Bruker experiments, select appropriate boundaries for the region of interest, noise region, minimum peak threshold and run it.
 3. **Run The Fit**: Open `ssfp_exchange_jointfit.m`, load your processed .mat files, select either a 2 site or 3 site process, appropriate boundaries and execute the solver.
-4. **Output**: Logarithmic $\chi^2$ maps for $k_{ex} vs\\,{R_2}$, $k_{ex} vs\\,{\nu_i}$, fitted curves for the SSFP profile and a table of the optimized parameters.
+4. **Output**: Logarithmic $\chi^2$ maps for $k_{ex} vs\\,{R_2}$, $k_{ex} vs\\,{\nu_i}$, $k_{ex} vs\\,{M_i}$ and fitted curves for the SSFP profile.
