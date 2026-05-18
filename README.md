@@ -51,6 +51,9 @@ The following figures for the fit and $\chi^{2}$ maps will be output after runni
 <p float="left">
    <img src="https://github.com/user-attachments/assets/106e4a98-0521-4155-af07-50e9eeb6bbc9", width="90%"/>
 </p>
+<p float="left">
+<img src="https://github.com/user-attachments/assets/475f6e9b-8c00-4894-a148-62f79b8c81a2", width="90%"/>
+</p>
 <p align="center">
    <img src="https://github.com/user-attachments/assets/42f44326-2aca-4854-8b14-4daedcefc5a3", width="43.7%"/>
 </p>
