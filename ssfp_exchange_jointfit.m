@@ -14,6 +14,7 @@ clc; close all; clearvars;
 %   - 'FLIP': Flip angle the experiment was performed with (degrees)
 %
 % SEE ALSO: chem_exchange_sim, lsqnonlin, MultiStart
+%
 
 % Processing options
 num_sites = 2;      % Toggle between 2 and 3 site joint fitting
