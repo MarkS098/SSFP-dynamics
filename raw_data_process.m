@@ -1,8 +1,8 @@
 clc; close all; clearvars;
 
 % Filepath
-data_dir = '/home/mark/NMR Data/XmX processing/XmX raw data/LF_Acetylacetone_24_11_25_DMSO_NaOH_ao'; % main experiment directory
-data_mat_name = 'ACAC_peak_A_ao_FA_10';
+data_dir = ''; % main experiment directory
+data_mat_name = '';
 
 % Processing parameters
 plot_spect = true;
@@ -73,7 +73,7 @@ for j = 1:numel(dir_num)
     O1 = parameters.offset_frq;
     SWH = parameters.sp_width;
     TR_vals(j) = parameters.rep_time*1e3;
-    FA = parameters.flip_angle;
+    FLIP = parameters.flip_angle;
 
     if (strcmp(file_type,'1r') || strcmp(file_type,'1i') || strcmp(file_type,'abs'))
         
@@ -127,5 +127,6 @@ set(gca,'FontSize',12)
 
 % Saving the .mat file in the data directory
 if save_data_mat == true
-    save([data_dir,filesep,data_mat_name],'peaks','TR_vals','FA')
+    save([data_dir,filesep,data_mat_name],'peaks','TR_vals','FLIP')
 end
+
