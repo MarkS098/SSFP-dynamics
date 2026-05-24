@@ -11,7 +11,7 @@ clc; close all; clearvars;
 %   Requires .mat files containing:
 %   - 'peaks': Vector of complex or absolute peak intensities.
 %   - 'TR_vals': Vector of repetition times (ms).
-%
+%   - 'FLIP': Flip angle the experiment was performed with (degrees)
 %
 % SEE ALSO: chem_exchange_sim, lsqnonlin, MultiStart
 
@@ -19,14 +19,14 @@ clc; close all; clearvars;
 num_sites = 2;      % Toggle between 2 and 3 site joint fitting
 
 % Constants 
-R1 = 1/10;          % Longitudinal relaxation rate (s^-1)
-skip_points = 10;    % points to omit from fitting from the start
+R1 = 1/11;          % Longitudinal relaxation rate (s^-1)
+skip_points = 0;    % points to omit from fitting from the start
 skip_end_points = 0; % points to omit from fitting from the end
 
 % Load data
-load('/home/mark/NMR Data/XmX processing/Data/Simulated data/mark_SSFP_test_data_offres_R2_less_than_10_A.mat','peaks','TR_vals','FLIP');
+load('','peaks','TR_vals','FLIP');
 M_0_A = abs(peaks(1+skip_points:end - skip_end_points));
-load('/home/mark/NMR Data/XmX processing/Data/Simulated data/mark_SSFP_test_data_offres_R2_less_than_10_B.mat','peaks','TR_vals','FLIP');
+load('','peaks','TR_vals','FLIP');
 M_0_B = abs(peaks(1+skip_points:end - skip_end_points));
 
 if num_sites == 3
@@ -43,8 +43,8 @@ end
 % 2 site exchange boundaries
 % Parameter bounds: [MA0, MB0, kex_AB, kex_BC, kex_AC, nuA, nuB, nuC, R2]
 if num_sites == 2
-    lb = [0.01, 0.01, 1, 0, 0, 0,    0,    0, 1];   
-    ub = [0.99, 0.99, 5, 0, 0, 1000, 1000, 0, 10];
+    lb = [0.01, 0.01, 0.1, 0, 0, 0, -20, 0, 0.1];   
+    ub = [0.99, 0.99, 100, 0, 0, 1000, 20, 0, 10];
 
 % 3 site exchange boundaries
 % Parameter bounds: [MA0, MB0,MC0, kex_AB, kex_BC, kex_AC, nuA, nuB, nuC, R2]
@@ -58,7 +58,7 @@ N_boot = 50;    % number of bootstrap runs
 n_grid = 50;    % chi square map resolution
 
 % Acquisition times
-TR_vals = TR_vals(1+skip_points:end - skip_end_points);  % seconds
+TR_vals = TR_vals(1+skip_points:end - skip_end_points)*1e-3;  % seconds
 TR_vals = TR_vals(:); % Ensure column vector
 
 M_0_A = M_0_A(:);
@@ -107,7 +107,6 @@ function residuals = objective_function_global(params, Tacq, M_exp_A, M_exp_B, M
     
     % Residuals scaled collectively
     res_signal = (scale*M_sim_cat - M_exp_cat)/mean(abs(M_exp_cat));
-
     residuals = res_signal;
 end
 
@@ -282,7 +281,7 @@ if n_active_maps > 0
     global_min = min(map_mins);
     global_max = max(map_maxs);
 
-    figure('Name', 'Unified Error Surface Analysis', 'Color', 'w', 'Position', [50, 200, 500*n_active_maps, 500]) 
+    figure('Name', 'Recovery Time vs Exchange Rate', 'Color', 'w', 'Position', [50, 200, 500*n_active_maps, 500]) 
     t = tiledlayout(1, n_active_maps, 'TileSpacing', 'Loose', 'Padding', 'Compact');
 
     for s = 1:3
@@ -298,7 +297,7 @@ if n_active_maps > 0
         c = colorbar; c.Label.String = 'log_{10}(\chi^2)';
         xlabel(sprintf('%s (s^{-1})', k_label_names{s}), 'FontSize', 11)
         ylabel('R_2 (s^{-1})', 'FontSize', 11)
-        title(sprintf('Error Surface: %s vs R_2', k_label_names{s}), 'FontSize', 13)
+        title(sprintf('%s vs R_2', k_label_names{s}), 'FontSize', 13)
         grid on
     end
 end
@@ -345,7 +344,7 @@ for s = 1:n_maps
 end
 
 all_names = {'M_{A0}','M_{B0}','k_{AB}','k_{BC}','k_{AC}','\nu_A','\nu_B','\nu_C','R_2'};
-figure('Name', 'Dynamic Frequency vs Exchange Analysis', 'Color', 'w', 'Position', [50, 50, 500*n_maps, 500]); 
+figure('Name', 'Frequency vs Exchange Rate', 'Color', 'w', 'Position', [50, 50, 500*n_maps, 500]); 
 t2 = tiledlayout(1, n_maps, 'TileSpacing', 'Loose', 'Padding', 'Compact');
 
 for s = 1:n_maps
@@ -360,6 +359,61 @@ for s = 1:n_maps
     title(map_labels{s}, 'FontSize', 13, 'Interpreter', 'tex'); grid on
 end
 
+% Maps both fractional populations (MA0, MB0) against the single exchange rate (k_AB)
+if num_sites == 2
+    % Define the physical fraction range (0 to 1)
+    f_range = linspace(0.01, 0.99, n_grid);
+    k_range = linspace(lb(3), ub(3), n_grid);
+    [F_mesh, K_mesh] = meshgrid(f_range, k_range);
+    
+    % Prepare storage for two physical maps
+    all_maps_pop = cell(1, 2);
+    pop_map_labels = {'k_{AB} vs M_{A0}', 'k_{AB} vs M_{B0}'};
+    final_pops = [MA_final, MB_final]; % From your fit results
+    
+    for s = 1:2
+        chi2_flat = zeros(size(F_mesh(:)));
+        F_flat = F_mesh(:);
+        K_flat = K_mesh(:);
+        
+        fprintf('Calculating %s Map... ', pop_map_labels{s});
+        
+        parfor idx = 1:numel(F_flat)
+            p_temp = best_params; 
+            
+            if s == 1 
+                p_temp(1) = F_flat(idx); 
+                p_temp(2) = 1 - F_flat(idx); % Force normalization to 1
+            else     
+                p_temp(1) = 1 - F_flat(idx); % Force normalization to 1
+                p_temp(2) = F_flat(idx); 
+            end
+            p_temp(3) = K_flat(idx);
+            
+            res = objective_function_global(p_temp, TR_vals, M_0_A, M_0_B, M_0_C, R1, FLIP, num_sites);
+            chi2_flat(idx) = sum(res.^2); 
+        end
+        all_maps_pop{s} = log10(reshape(chi2_flat, n_grid, n_grid));
+        fprintf('Done.\n');
+    end
+    
+    % Population Analysis
+    figure('Name', 'Population vs Exchange Rate', 'Color', 'w', 'Position', [100, 100, 1100, 500]); 
+    t3 = tiledlayout(1, 2, 'TileSpacing', 'Loose', 'Padding', 'Compact');
+    
+    for s = 1:2
+        nexttile
+        contourf(K_mesh, F_mesh, all_maps_pop{s}, 25, 'LineColor', 'none')
+        hold on 
+        plot(best_params(3), final_pops(s), 'r*', 'MarkerSize', 12, 'LineWidth', 2)
+        
+        colormap(jet); colorbar;
+        xlabel('k_{AB} (s^{-1})', 'FontSize', 11)
+        ylabel(sprintf('%s', extractAfter(pop_map_labels{s}, ' vs')), 'FontSize', 11)
+        title(pop_map_labels{s}, 'FontSize', 12);
+        grid on
+    end
+end
 % Fit Curves Plotting
 title_str = { ...
     sprintf('Global Fit: M_{A0}=%.3f\\pm%.3f, M_{B0}=%.3f\\pm%.3f', MA_final, param_errors(1), MB_final, param_errors(2)), ...
