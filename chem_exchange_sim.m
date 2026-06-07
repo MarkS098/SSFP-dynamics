@@ -98,6 +98,7 @@ MXC_null = zeros(size(Tacq));MYC_null = zeros(size(Tacq)); MZC_null = zeros(size
 
 I10 = eye(10);
 
+% Null space solution simulator
 for q=1:numel(Tacq)
     TR=Tacq(q);
 
