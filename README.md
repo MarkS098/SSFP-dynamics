@@ -1,6 +1,6 @@
-# SSFP Chemical Exchange Analysis Suite
+# SSFP Chemical Exchange Analysis Package
 
-A MATLAB-based computational framework for extracting multi-site chemical exchange kinetics and transverse relaxation rates from Steady-State Free Precession (SSFP) NMR data.
+A MATLAB-based computational framework for extracting multi-site chemical exchange kinetics, transverse relaxation rates, population and frequencies from Steady-State Free Precession (SSFP) NMR data.
 
 ## ⚙️ Requirements
 
