@@ -20,21 +20,22 @@ clc; close all; clearvars;
 num_sites = 2;      % Toggle between 2 and 3 site joint fitting
 
 % Constants 
-R1 = 1/11;          % Longitudinal relaxation rate (s^-1)
+R1 = 1/3.25;          % Longitudinal relaxation rate (s^-1)
 skip_points = 0;    % points to omit from fitting from the start
 skip_end_points = 0; % points to omit from fitting from the end
 
 % Load data
-load('','peaks','TR_vals','FLIP');
+load('/home/mark/NMR Data/SSFP Exchange Project/Data/Durene/Z_durene_CH_onres_FA40.mat','peaks','TR_vals');
 M_0_A = abs(peaks(1+skip_points:end - skip_end_points));
-load('','peaks','TR_vals','FLIP');
+load('/home/mark/NMR Data/SSFP Exchange Project/Data/Durene/Z_durene_CH3_offres_FA40.mat','peaks','TR_vals');
 M_0_B = abs(peaks(1+skip_points:end - skip_end_points));
+FLIP = 40;
 
 if num_sites == 3
-    % Replace path below with actual Peak C data
-    % load('/home/mark/NMR Data/XmX processing/XmX raw data/LF_Acetylacetone_24_11_25_DMSO_NaOH_ao/ACAC_peak_C_ao_FA_10.mat','peaks','TR_vals','FA');
-    % M_0_C = abs(peaks(1+skip_points:end - skip_end_points));
-    % For demonstration, allocating a dummy vector if the file doesn't exist yet:
+    
+    load('/home/mark/NMR Data/XmX processing/XmX raw data/LF_Acetylacetone_24_11_25_DMSO_NaOH_ao/ACAC_peak_C_ao_FA_10.mat','peaks','TR_vals','FA');
+    M_0_C = abs(peaks(1+skip_points:end - skip_end_points));
+    % Allocating a dummy vector if the file doesn't exist yet
     M_0_C = zeros(size(M_0_A)); 
     M_0_C = M_0_C(:);
 else
@@ -44,8 +45,8 @@ end
 % 2 site exchange boundaries
 % Parameter bounds: [MA0, MB0, kex_AB, kex_BC, kex_AC, nuA, nuB, nuC, R2]
 if num_sites == 2
-    lb = [0.01, 0.01, 0.1, 0, 0, 0, -20, 0, 0.1];   
-    ub = [0.99, 0.99, 100, 0, 0, 1000, 20, 0, 10];
+    lb = [0.01, 0.01, -2, 0, 0, -10, 0, 0, 0.1];   
+    ub = [0.99, 0.99, 2, 0, 0, 10, 2500, 0, 10];
 
 % 3 site exchange boundaries
 % Parameter bounds: [MA0, MB0,MC0, kex_AB, kex_BC, kex_AC, nuA, nuB, nuC, R2]
@@ -54,7 +55,7 @@ elseif num_sites == 3
     ub = [0.99, 0.99, 20, 20, 20, 1000, 1000, 1000, 10];
 end
 
-Nstart = 1000;  % number of random starting points within bounds
+Nstart = 10000;  % number of random starting points within bounds
 N_boot = 50;    % number of bootstrap runs
 n_grid = 50;    % chi square map resolution
 
@@ -135,18 +136,6 @@ rng default
 param_matrix = vertcat(all_solutions.X);  
 fvals = [all_solutions.Fval];             
 
-% Plot histograms
-param_names = {'MA0','MB0','kAB','kBC','kAC','nuA','nuB','nuC','R2'};
-figure
-for i = 1:size(param_matrix,2)
-    subplot(3,3,i)
-    histogram(param_matrix(:,i),15,'FaceColor',[0.2 0.2 0.8],'EdgeColor','k')
-    xlabel(param_names{i},'FontSize',12)
-    ylabel('Count','FontSize',12)
-    title(sprintf('%s (mean=%.3f)',param_names{i},mean(param_matrix(:,i))))
-    grid on
-end
-
 if best_params(8) == 0 && best_params(4) == 0 && best_params(5) == 0 
     total_act = best_params(1) + best_params(2);
     MA_final = best_params(1)/total_act;
@@ -180,13 +169,6 @@ global_scale = (M_sim_opt_cat'*M_exp_cat)/(M_sim_opt_cat'*M_sim_opt_cat);
 M_A_opt = global_scale*M_A_unscaled(:);
 M_B_opt = global_scale*M_B_unscaled(:);
 M_C_opt = global_scale*M_C_unscaled(:);
-
-% Global Goodness of fit tests
-residuals_A = M_A_opt - M_0_A;
-residuals_B = M_B_opt - M_0_B;
-if num_sites == 3
-    residuals_C = M_C_opt - M_0_C;
-end
 
 boot_params = zeros(N_boot, numel(best_params));
 
@@ -232,7 +214,7 @@ end
 param_errors = std(boot_params);
 inactive_mask = (ub - lb) < 1e-5; 
 param_errors(inactive_mask) = 0;
-fprintf('Done.');
+fprintf('Done.\n');
 
 % Map calculations
 R2_range = linspace(lb(9), ub(9), n_grid); 
