@@ -1,15 +1,20 @@
-% Reads Bruker's procs file and extracts experimental parameters
+% Reads Bruker's procs file and extracts processing parameters
 % relevant for SSFP reconstruction. Syntax:
 %
+%              parameters=read_ssfp_procs(directory)
 %
+% Parameters:
 %
+%    directory - path to the directory containing
+%                the procs file
 %
+% Outputs the following fields of the parameters structure:
 %
+%    .SI           - processed spectrum size
 %
-%
-%
-%
-%
+%    .nc_proc      - processing scaling factor
+%                    (NC_proc)
+
 function parameters=read_ssfp_procs(directory)
 
 % Read acquisition parameters file
